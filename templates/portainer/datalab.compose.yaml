@@ -1,0 +1,15 @@
+services:
+  lab:
+    image: ${LAB_IMAGE:?Image de registre requise}
+    restart: unless-stopped
+    init: true
+    environment:
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:?Token requis}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${LAB_PORT:-8888}:8888"
+    volumes:
+      - notebooks:/home/lab/work
+      - ${DATASETS_PATH:?Chemin absolu sur la cible requis}:/datasets:ro
+      - ${LAB_OUTPUT_PATH:?Chemin absolu sur la cible requis}:/output
+volumes:
+  notebooks:

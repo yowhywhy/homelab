@@ -1,0 +1,11 @@
+services:
+  agent:
+    image: portainer/agent:${PORTAINER_TAG:-lts}
+    restart: unless-stopped
+    environment:
+      AGENT_SECRET: ${AGENT_SECRET:?Configurer le secret commun serveur et agents}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${AGENT_PORT:-9001}:9001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_VOLUMES_PATH:-/var/lib/docker/volumes}:/var/lib/docker/volumes

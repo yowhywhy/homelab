@@ -1,0 +1,27 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:${MC_IMAGE_TAG:-java21}
+    restart: unless-stopped
+    stop_grace_period: 2m
+    stdin_open: true
+    tty: true
+    environment:
+      EULA: ${MC_EULA:-FALSE}
+      VERSION: ${MC_VERSION:-1.21.1}
+      TYPE: ${MC_TYPE:-VANILLA}
+      MEMORY: ${MC_MEMORY:-2G}
+      MAX_PLAYERS: ${MC_MAX_PLAYERS:-10}
+      ENABLE_RCON: "false"
+      TZ: ${TZ:-Europe/Paris}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${MC_PORT:-25565}:25565"
+    volumes:
+      - world:/data
+    healthcheck:
+      test: [CMD, mc-health]
+      interval: 30s
+      timeout: 10s
+      start_period: 3m
+      retries: 5
+volumes:
+  world:

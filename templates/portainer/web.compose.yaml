@@ -1,0 +1,13 @@
+services:
+  web:
+    image: ${WEB_IMAGE:?Image de registre requise}
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      APP_MESSAGE: ${APP_MESSAGE:-Homelab operationnel}
+      DATABASE_URL: ${DATABASE_URL:-}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${WEB_PORT:-3000}:3000"

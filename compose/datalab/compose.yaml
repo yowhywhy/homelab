@@ -1,0 +1,17 @@
+services:
+  lab:
+    image: ${LAB_IMAGE:-homelab-datalab:local}
+    build:
+      context: ../../templates/datalab
+    restart: unless-stopped
+    init: true
+    environment:
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:?Configurer un token Jupyter long et aleatoire}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${LAB_PORT:-8888}:8888"
+    volumes:
+      - notebooks:/home/lab/work
+      - ${DATASETS_PATH:-../../imports}:/datasets:ro
+      - ${LAB_OUTPUT_PATH:-../../data/lab-output}:/output
+volumes:
+  notebooks:

@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:${POSTGRES_TAG:-17-bookworm}
+    restart: unless-stopped
+    stop_grace_period: 1m
+    shm_size: ${PG_SHM_SIZE:-256m}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-homelab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configurer POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-homelab}
+    command: [postgres, -c, "shared_buffers=${PG_SHARED_BUFFERS:-128MB}", -c, "work_mem=${PG_WORK_MEM:-4MB}", -c, "maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-64MB}", -c, "max_connections=${PG_MAX_CONNECTIONS:-50}"]
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${PG_PORT:-5432}:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ${IMPORTS_PATH:-../../imports}:/imports:ro
+      - ${BACKUPS_PATH:-../../backups}:/backups
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  pgadmin:
+    image: dpage/pgadmin4:${PGADMIN_TAG:-latest}
+    profiles: [admin]
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  database:
+  pgadmin:
