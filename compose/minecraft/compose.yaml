@@ -7,16 +7,18 @@ services:
     tty: true
     environment:
       EULA: ${MC_EULA:-FALSE}
-      VERSION: ${MC_VERSION:-1.21.1}
+      VERSION: ${MC_VERSION:-1.21.11}
       TYPE: ${MC_TYPE:-VANILLA}
-      MEMORY: ${MC_MEMORY:-2G}
+      MEMORY: ${MC_MEMORY:-12G}
+      ONLINE_MODE: ${MC_ONLINE_MODE:-FALSE}
+      LEVEL: ${MC_LEVEL:-world}
       MAX_PLAYERS: ${MC_MAX_PLAYERS:-10}
       ENABLE_RCON: "false"
       TZ: ${TZ:-Europe/Paris}
     ports:
       - "${BIND_IP:-127.0.0.1}:${MC_PORT:-25565}:25565"
     volumes:
-      - world:/data
+      - ${MC_DATA_PATH:-world}:/data
     healthcheck:
       test: [CMD, mc-health]
       interval: 30s
