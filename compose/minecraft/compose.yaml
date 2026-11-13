@@ -9,10 +9,14 @@ services:
       EULA: ${MC_EULA:-FALSE}
       VERSION: ${MC_VERSION:-1.21.11}
       TYPE: ${MC_TYPE:-VANILLA}
+      CUSTOM_SERVER: ${MC_CUSTOM_SERVER:-}
       MEMORY: ${MC_MEMORY:-12G}
       ONLINE_MODE: ${MC_ONLINE_MODE:-FALSE}
       LEVEL: ${MC_LEVEL:-world}
       MAX_PLAYERS: ${MC_MAX_PLAYERS:-10}
+      SERVER_PORT: "25565"
+      VIEW_DISTANCE: ${MC_VIEW_DISTANCE:-10}
+      SIMULATION_DISTANCE: ${MC_SIMULATION_DISTANCE:-10}
       ENABLE_RCON: "false"
       TZ: ${TZ:-Europe/Paris}
     ports:

@@ -8,6 +8,28 @@ Image [itzg/minecraft-server](https://docker-minecraft-server.readthedocs.io/en/
 
 `down` envoie un arrêt propre et laisse jusqu'à deux minutes au serveur pour sauvegarder. `up` le redémarre ; les plantages peuvent déclencher la politique de redémarrage. Ne pas tuer le conteneur pendant l'écriture du monde. Sauvegarder le volume serveur arrêté avant toute modification de version. Éviter les rétrogradations de mondes. RCON est désactivé ; aucun port d'administration RCON n'est publié. Utiliser les logs pour diagnostiquer une première génération de monde longue.
 
+### Distances d'affichage et de simulation
+
+Dans `config/minecraft.env`, régler les deux distances en **chunks** :
+
+```dotenv
+MC_VIEW_DISTANCE=10
+MC_SIMULATION_DISTANCE=10
+```
+
+`MC_VIEW_DISTANCE` règle la distance des chunks envoyés aux joueurs (`view-distance`). La distance de rendu du client peut encore limiter ce que le joueur voit. `MC_SIMULATION_DISTANCE` règle la distance de simulation du monde autour des joueurs (`simulation-distance`), notamment les entités et les mécanismes. Ces variables sont prises en charge par l'[image Minecraft](https://docker-minecraft-server.readthedocs.io/en/latest/configuration/server-properties/).
+
+Les deux valeurs valent 10 par défaut. Augmenter les distances accroît la charge serveur ; la RAM seule ne garantit pas de bonnes performances, le processeur et le nombre de joueurs comptent aussi. Les réglages propres aux mondes Paper ou à certains plugins peuvent également influer sur le résultat.
+
+Après modification, appliquer avec `config minecraft`, puis `up minecraft` :
+
+```powershell
+.\scripts\homelab.ps1 config minecraft
+.\scripts\homelab.ps1 up minecraft
+```
+
+Sous Linux : `bash scripts/homelab.sh config minecraft`, puis `bash scripts/homelab.sh up minecraft`. Le conteneur est recréé pour appliquer les variables, avec l'arrêt propre configuré. Les valeurs du fichier env sont prioritaires sur les propriétés correspondantes importées dans `server.properties`.
+
 ### Importer un serveur Java existant
 
 Arrêter proprement l'ancien serveur, puis faire une copie complète de son dossier avant toute modification. Pour le premier démarrage, conserver son type et sa version si possible ; tester la mise à niveau vers 1.21.11 sur une copie. Ne jamais ouvrir un monde issu d'une version plus récente avec une version plus ancienne.
@@ -36,6 +58,16 @@ MC_ONLINE_MODE=FALSE
 ```
 
 Adapter `MC_LEVEL` à l'ancien `level-name` et `MC_TYPE=PAPER` si l'ancien serveur utilisait Paper. Sous Linux, utiliser par exemple `MC_DATA_PATH=/home/votre-compte/homelab/data/minecraft` et donner au conteneur les droits de lecture/écriture sur ce dossier dédié. Le chemin doit être absolu sur la machine Docker cible. `data/` est ignoré par Git ; ne jamais committer ces données.
+
+Pour conserver exactement un JAR serveur existant, l'image prend aussi en charge le [mode CUSTOM](https://docker-minecraft-server.readthedocs.io/en/latest/configuration/misc-options/). Garder ce JAR et ses éventuelles bibliothèques dans le dossier importé, puis configurer par exemple :
+
+```dotenv
+MC_TYPE=CUSTOM
+MC_CUSTOM_SERVER=/data/minecraft-spigot-server.jar
+MC_LEVEL=NouveauMondeAout2026
+```
+
+`MC_CUSTOM_SERVER` est un chemin **dans le conteneur** : `/data` correspond à `MC_DATA_PATH` sur l'hôte. Dans ce mode, la version réelle dépend du JAR, pas de `MC_VERSION` ; sa mise à jour est manuelle. Ne pas utiliser `MC_LEVEL=world` si le monde importé porte un autre nom : cela crée ou charge un autre monde. Garder les dossiers `<nom>_nether` et `<nom>_the_end` pour un serveur Spigot. Le mode Vanilla ne charge pas les plugins Spigot.
 
 Les variables de l'image reprennent la priorité sur les propriétés qu'elles gèrent : vérifier dans le fichier env le port, le nombre de joueurs, le nom de monde et le mode en ligne, même après avoir copié `server.properties`. Le port interne reste 25565 ; `MC_PORT` règle le port publié sur l'hôte.
 
