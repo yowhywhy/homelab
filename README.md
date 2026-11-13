@@ -26,28 +26,50 @@ data/              sorties locales du Data Lab
 
 Prérequis : Git, Docker Engine avec plugin Compose récent, ou Docker Desktop en mode Linux avec backend WSL2 ; Bash sous Linux ou PowerShell 5.1+ sous Windows. Prévoir de l'espace disque, une connexion pour télécharger les images et les droits d'accès au moteur Docker. Aucun script n'installe Docker, NetBird ou un service système.
 
+### Windows : PowerShell (`.ps1`)
+
+Les fichiers `.ps1` sont des scripts PowerShell. Sous Windows, utiliser les commandes suivantes depuis PowerShell :
+
 ```powershell
 git clone <URL-DE-VOTRE-DEPOT> homelab
 cd homelab
 .\scripts\homelab.ps1 list
-.\scripts\homelab.ps1 init postgres
-# Éditer config/postgres.env et définir POSTGRES_PASSWORD.
+.\scripts\homelab.ps1 init all
+# Remplir les fichiers config/*.env pour les services souhaités.
+notepad config\postgres.env
+# Définir au minimum POSTGRES_PASSWORD pour PostgreSQL.
 .\scripts\homelab.ps1 config postgres
 # À exécuter quand vous souhaitez réellement démarrer le service :
 .\scripts\homelab.ps1 up postgres
 ```
 
+### Linux / Raspberry Pi / WSL : Bash (`.sh`)
+
+Les fichiers `.sh` sont des scripts Bash. Les utiliser sous Linux, sur le Raspberry Pi ou dans WSL sous Windows :
+
 ```bash
 git clone <URL-DE-VOTRE-DEPOT> homelab
 cd homelab
 bash scripts/homelab.sh list
-bash scripts/homelab.sh init postgres
-# Éditer config/postgres.env et définir POSTGRES_PASSWORD.
+bash scripts/homelab.sh init all
+# Remplir les fichiers config/*.env avec votre éditeur, par exemple :
+nano config/postgres.env
+# Définir au minimum POSTGRES_PASSWORD pour PostgreSQL.
 bash scripts/homelab.sh config postgres
 bash scripts/homelab.sh up postgres
 ```
 
-Répéter `init`, édition, `config`, `up` pour chaque stack choisie. `init` refuse d'écraser une configuration existante. Le fichier `.env.example` racine est explicatif : les scripts passent toujours explicitement `config/<instance>.env`. Les valeurs du shell ont priorité sur le fichier env selon les règles Compose : éviter les variables homonymes exportées involontairement.
+### Initialiser puis remplir les configurations
+
+`init all` crée les six fichiers `portainer.env`, `agent.env`, `minecraft.env`, `postgres.env`, `web.env` et `datalab.env` dans `config/`. Vous pouvez ensuite tous les remplir avant de choisir les services à lancer. La commande affiche les fichiers créés et ceux conservés : elle peut être relancée sans écraser vos valeurs existantes, notamment votre mot de passe PostgreSQL.
+
+Pour préparer uniquement un service, utiliser `init postgres` (ou le nom d'une autre stack). Cette forme refuse toujours d'écraser une configuration existante. `all` est réservé à `init` et ne prend aucune option ; les commandes `config`, `up`, `down`, etc. ciblent un service à la fois.
+
+L'initialisation ne démarre rien et ne nécessite pas Docker. Après édition, lancer `config <stack>` pour valider, puis `up <stack>` pour démarrer uniquement les services souhaités. Il n'est pas nécessaire de lancer toutes les stacks : Portainer Server est destiné à la tour, Agent aux machines secondaires.
+
+Modifier les fichiers dans **`config/`**. Ceux de **`.validation/`** sont générés pour les vérifications avec des valeurs factices ; ne pas les utiliser pour vos services. Les fichiers locaux de `config/` sont ignorés par Git.
+
+Le fichier `.env.example` racine est explicatif : les scripts passent toujours explicitement `config/<instance>.env`. Les valeurs du shell ont priorité sur le fichier env selon les règles Compose : éviter les variables homonymes exportées involontairement.
 
 | Stack | Accès local par défaut | Configuration nécessaire |
 | --- | --- | --- |
@@ -62,6 +84,19 @@ Tous les ports écoutent sur loopback par défaut. Renseigner `BIND_IP` avec l'a
 
 ## Commandes usuelles
 
+| Action | Effet |
+| --- | --- |
+| `list` | Afficher les stacks disponibles |
+| `init all` | Préparer tous les fichiers env manquants, conserver ceux existants |
+| `init <stack>` | Préparer une configuration unique sans écraser un fichier existant |
+| `config <stack>` | Valider la configuration sans démarrer de conteneur |
+| `up <stack>` | Construire/télécharger les images nécessaires et démarrer en arrière-plan |
+| `logs <stack>` | Suivre les logs ; Ctrl+C quitte l'affichage sans arrêter le service |
+| `down <stack>` | Arrêter les conteneurs en conservant les volumes de données |
+| `update <stack>` | Mettre à jour les images et recréer les services |
+
+Sous Windows / PowerShell :
+
 ```powershell
 .\scripts\homelab.ps1 logs minecraft
 .\scripts\homelab.ps1 down minecraft
@@ -72,7 +107,19 @@ Tous les ports écoutent sur loopback par défaut. Renseigner `BIND_IP` avec l'a
 .\scripts\homelab.ps1 up postgres -Instance postgres-test
 ```
 
-Sous Bash, remplacer le préfixe par `bash scripts/homelab.sh` et les options par `--admin`, `--dev`, `--instance postgres-test`. Pour la deuxième base, changer au minimum `PG_PORT`, éventuellement `PGADMIN_PORT`, dans `config/postgres-test.env`. Garder le même nom d'instance pour toutes ses commandes. Une instance nommée désigne une seule stack.
+Sous Linux / Bash :
+
+```bash
+bash scripts/homelab.sh logs minecraft
+bash scripts/homelab.sh down minecraft
+bash scripts/homelab.sh update minecraft
+bash scripts/homelab.sh up postgres --admin
+bash scripts/homelab.sh up web --dev
+bash scripts/homelab.sh init postgres --instance postgres-test
+bash scripts/homelab.sh up postgres --instance postgres-test
+```
+
+Pour la deuxième base, changer au minimum `PG_PORT`, éventuellement `PGADMIN_PORT`, dans `config/postgres-test.env`. Garder le même nom d'instance pour toutes ses commandes. Une instance nommée désigne une seule stack.
 
 `down` conserve les volumes. `update` tire les images distantes ou reconstruit web/lab avec des bases récentes, puis recrée les services : interruption possible. Il ne met pas à jour Git ni les dépendances npm/pip verrouillées. Sauvegarder avant une mise à jour ; ne pas changer une version majeure PostgreSQL sur un volume existant. Utiliser les mêmes options `-Dev`/`-Admin` pour les opérations sur la variante choisie ; repasser `up` sans `-Dev` revient en production.
 

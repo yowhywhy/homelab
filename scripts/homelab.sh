@@ -8,7 +8,22 @@ if [[ "$action" == list ]]; then
 fi
 stack="${2:?Usage: bash scripts/homelab.sh ACTION STACK [--instance NOM] [--dev] [--admin] [--file NOM]}"
 shift 2
-case "$stack" in portainer|agent|minecraft|postgres|web|datalab) ;; *) echo 'Stack inconnue' >&2; exit 1;; esac
+case "$stack" in all|portainer|agent|minecraft|postgres|web|datalab) ;; *) echo 'Stack inconnue' >&2; exit 1;; esac
+if [[ "$stack" == all ]]; then
+  [[ "$action" == init ]] || { echo 'all est disponible uniquement pour init.' >&2; exit 1; }
+  [[ $# -eq 0 ]] || { echo 'init all ne prend pas d options.' >&2; exit 1; }
+  for name in portainer agent minecraft postgres web datalab; do
+    destination="$root/config/$name.env"
+    if [[ -e "$destination" ]]; then
+      echo "Conserve : config/$name.env"
+    else
+      cp "$root/compose/$name/.env.example" "$destination"
+      echo "Cree : config/$name.env"
+    fi
+  done
+  echo 'Configurer les fichiers dans config/ avant de lancer les stacks choisies.'
+  exit 0
+fi
 instance="$stack"; dev=false; admin=false; file=''
 while [[ $# -gt 0 ]]; do
   case "$1" in
