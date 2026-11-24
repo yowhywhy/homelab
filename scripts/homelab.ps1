@@ -1,19 +1,20 @@
 param(
     [Parameter(Position=0)][ValidateSet('list','init','config','up','down','logs','update','backup','restore')][string]$Action = 'list',
-    [Parameter(Position=1)][ValidateSet('all','portainer','agent','minecraft','postgres','web','datalab')][string]$Stack,
+    [Parameter(Position=1)][ValidateSet('all','portainer','agent','minecraft','postgres','web','datalab','cloudflare-tunnel')][string]$Stack,
     [string]$Instance,
     [switch]$Dev,
     [switch]$Admin,
+    [switch]$Proxy,
     [string]$File
 )
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
-$Stacks = @('portainer','agent','minecraft','postgres','web','datalab')
+$Stacks = @('portainer','agent','minecraft','postgres','web','datalab','cloudflare-tunnel')
 if ($Action -eq 'list') { $Stacks; exit 0 }
 if (!$Stack) { throw 'Indiquer une stack. Exemple : .\scripts\homelab.ps1 init postgres' }
 if ($Stack -eq 'all') {
     if ($Action -ne 'init') { throw 'all est disponible uniquement pour init.' }
-    if ($Instance -or $Dev -or $Admin -or $File) { throw 'init all ne prend pas les options Instance, Dev, Admin ou File.' }
+    if ($Instance -or $Dev -or $Admin -or $Proxy -or $File) { throw 'init all ne prend pas les options Instance, Dev, Admin, Proxy ou File.' }
     foreach ($Name in $Stacks) {
         $Destination = Join-Path $Root "config/$Name.env"
         if (Test-Path -LiteralPath $Destination) {
@@ -30,6 +31,7 @@ if (!$Instance) { $Instance = $Stack }
 if ($Instance -cnotmatch '^[a-z0-9][a-z0-9_-]*$') { throw 'Instance : minuscules, chiffres, tirets et underscores uniquement.' }
 if ($Dev -and $Stack -ne 'web') { throw '-Dev exige web.' }
 if ($Admin -and $Stack -ne 'postgres') { throw '-Admin exige postgres.' }
+if ($Proxy -and $Stack -ne 'web') { throw '-Proxy exige web.' }
 $EnvFile = Join-Path $Root "config/$Instance.env"
 if ($Action -eq 'init') {
     if (Test-Path -LiteralPath $EnvFile) { throw "Configuration deja presente : $EnvFile" }
@@ -40,6 +42,7 @@ if ($Action -eq 'init') {
 if (!(Test-Path -LiteralPath $EnvFile)) { throw "Executer init $Stack avec la meme instance auparavant." }
 $ComposeArgs = @('compose','--project-name',"homelab-$Instance",'--env-file',$EnvFile,'-f',(Join-Path $Root "compose/$Stack/compose.yaml"))
 if ($Dev) { $ComposeArgs += @('-f',(Join-Path $Root 'compose/web/compose.dev.yaml')) }
+if ($Proxy) { $ComposeArgs += @('-f',(Join-Path $Root 'compose/web/compose.proxy.yaml')) }
 if ($Admin) { $ComposeArgs += @('--profile','admin') }
 function Invoke-Compose([string[]]$CommandArgs) {
     & docker @ComposeArgs @CommandArgs

@@ -12,7 +12,7 @@ Tour principale : Docker + Portainer Server + stacks au choix
 Chaque machine stocke ses données localement. Git transporte les configurations et le code, jamais les données ni les secrets. Portainer administre les moteurs distants ; aucune réplication, migration automatique ou haute disponibilité n'est prévue.
 
 ```text
-compose/           portainer, agent, minecraft, postgres, web, datalab
+compose/           portainer, agent, minecraft, postgres, web, datalab, cloudflare-tunnel
 templates/         nextjs, datalab, portainer
 scripts/           commandes Bash et PowerShell, sauvegarde/import PostgreSQL
 config/            fichiers .env locaux ignorés par Git
@@ -61,7 +61,7 @@ bash scripts/homelab.sh up postgres
 
 ### Initialiser puis remplir les configurations
 
-`init all` crée les six fichiers `portainer.env`, `agent.env`, `minecraft.env`, `postgres.env`, `web.env` et `datalab.env` dans `config/`. Vous pouvez ensuite tous les remplir avant de choisir les services à lancer. La commande affiche les fichiers créés et ceux conservés : elle peut être relancée sans écraser vos valeurs existantes, notamment votre mot de passe PostgreSQL.
+`init all` crée les sept fichiers `portainer.env`, `agent.env`, `minecraft.env`, `postgres.env`, `web.env`, `datalab.env` et `cloudflare-tunnel.env` dans `config/`. Vous pouvez ensuite tous les remplir avant de choisir les services à lancer. La commande affiche les fichiers créés et ceux conservés : elle peut être relancée sans écraser vos valeurs existantes, notamment votre mot de passe PostgreSQL.
 
 Pour préparer uniquement un service, utiliser `init postgres` (ou le nom d'une autre stack). Cette forme refuse toujours d'écraser une configuration existante. `all` est réservé à `init` et ne prend aucune option ; les commandes `config`, `up`, `down`, etc. ciblent un service à la fois.
 
@@ -79,6 +79,7 @@ Le fichier `.env.example` racine est explicatif : les scripts passent toujours e
 | postgres | 127.0.0.1:5432 | mot de passe ; pgAdmin optionnel : 5050 |
 | web | http://127.0.0.1:3000 | modèle fourni ou chemin vers votre application |
 | datalab | http://127.0.0.1:8888 | `JUPYTER_TOKEN` aléatoire |
+| cloudflare-tunnel | aucun port entrant | `TUNNEL_TOKEN`, réseau externe `homelab-proxy` |
 
 Tous les ports écoutent sur loopback par défaut. Renseigner `BIND_IP` avec l'adresse NetBird de la machine pour un accès privé Linux. Lire les particularités Docker Desktop dans [installation et réseau](docs/installation.md) avant d'exposer un agent. Ne pas publier ces services directement sur Internet.
 
@@ -131,10 +132,13 @@ docker compose -p homelab-postgres --env-file config/postgres.env -f compose/pos
 
 ## Services et documentation
 
+Pour publier volontairement une application web par domaine Cloudflare, utiliser la stack indépendante `cloudflare-tunnel` et la variante web `-Proxy` / `--proxy`. Les accès privés restent sur NetBird. La préparation du réseau, du token, des sous-domaines et de Portainer est détaillée dans le guide ci-dessous.
+
 - [Installer les trois machines et NetBird](docs/installation.md).
 - [Configurer Minecraft, Next.js et le Data Lab](docs/services.md).
 - [PostgreSQL : instances, imports volumineux, sauvegardes et réglages](docs/postgres.md).
 - [Administrer plusieurs machines avec Portainer et déployer depuis Git](docs/portainer.md).
+- [Cloudflare Tunnel : domaines web, Next.js, Portainer et Access](docs/cloudflare-tunnel.md).
 - [Persistance, mises à jour et récupération](docs/operations.md).
 - [Vérifications réalisées et limites](docs/validation.md).
 

@@ -1,0 +1,21 @@
+# Image de production preconstruite, aucun port publie sur l'hote.
+services:
+  web:
+    image: ${WEB_IMAGE:?Image de registre requise}
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      APP_MESSAGE: ${APP_MESSAGE:-Homelab operationnel}
+      DATABASE_URL: ${DATABASE_URL:-}
+    networks:
+      default:
+      proxy:
+        aliases:
+          - ${WEB_PROXY_ALIAS:-portfolio}
+networks:
+  proxy:
+    external: true
+    name: homelab-proxy

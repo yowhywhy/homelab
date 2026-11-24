@@ -1,0 +1,13 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:${CLOUDFLARED_TAG:-latest}
+    command: [tunnel, --no-autoupdate, run]
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Configurer le token du tunnel Cloudflare}
+    networks:
+      - proxy
+networks:
+  proxy:
+    external: true
+    name: homelab-proxy

@@ -1,5 +1,7 @@
 # Portainer et déploiements depuis Git
 
+La stack Cloudflare Tunnel et le modèle Next.js connecté à `homelab-proxy` sont décrits dans le [guide dédié](cloudflare-tunnel.md). Ils peuvent être déployés sur la tour ou le Pi via leur environnement Portainer, sans remplacer NetBird.
+
 ## Serveur et agents
 
 Sur la tour, initialiser `portainer`, fixer `PORTAINER_TAG`, `BIND_IP`, un secret commun long, puis lancer la stack. Ouvrir HTTPS 9443, vérifier le certificat autosigné attendu et créer immédiatement le compte administrateur. Si l'initialisation expire, redémarrer le conteneur via Compose et recommencer. Le socket Docker permet à Portainer d'administrer l'hôte avec des privilèges élevés.

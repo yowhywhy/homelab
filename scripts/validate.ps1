@@ -7,13 +7,14 @@ $OldDockerConfig = $env:DOCKER_CONFIG
 $env:DOCKER_CONFIG = Join-Path $Scratch 'docker'
 New-Item -ItemType Directory -Force -Path $env:DOCKER_CONFIG | Out-Null
 try {
-    foreach ($Stack in @('portainer','agent','minecraft','postgres','web','datalab')) {
+    foreach ($Stack in @('portainer','agent','minecraft','postgres','web','datalab','cloudflare-tunnel')) {
         $EnvFile = Join-Path $Scratch "$Stack.env"
         $Values = Get-Content -Raw -LiteralPath (Join-Path $Root "compose/$Stack/.env.example")
         $Values = $Values -replace '(?m)^AGENT_SECRET=$','AGENT_SECRET=validation-only'
         $Values = $Values -replace '(?m)^POSTGRES_PASSWORD=$','POSTGRES_PASSWORD=validation-only'
         $Values = $Values -replace '(?m)^PGADMIN_PASSWORD=$','PGADMIN_PASSWORD=validation-only'
         $Values = $Values -replace '(?m)^JUPYTER_TOKEN=$','JUPYTER_TOKEN=validation-only'
+        $Values = $Values -replace '(?m)^TUNNEL_TOKEN=$','TUNNEL_TOKEN=validation-only'
         [IO.File]::WriteAllText($EnvFile, $Values)
         $ArgsBase = @('compose','-p',"validation-$Stack",'--env-file',$EnvFile,'-f',(Join-Path $Root "compose/$Stack/compose.yaml"))
         & docker @ArgsBase config --quiet
@@ -21,6 +22,10 @@ try {
         if ($Stack -eq 'web') {
             & docker @ArgsBase -f (Join-Path $Root 'compose/web/compose.dev.yaml') config --quiet
             if ($LASTEXITCODE -ne 0) { throw 'Compose web dev invalide' }
+            & docker @ArgsBase -f (Join-Path $Root 'compose/web/compose.proxy.yaml') config --quiet
+            if ($LASTEXITCODE -ne 0) { throw 'Compose web proxy invalide' }
+            & docker @ArgsBase -f (Join-Path $Root 'compose/web/compose.dev.yaml') -f (Join-Path $Root 'compose/web/compose.proxy.yaml') config --quiet
+            if ($LASTEXITCODE -ne 0) { throw 'Compose web dev + proxy invalide' }
         }
         if ($Stack -eq 'postgres') {
             & docker @ArgsBase --profile admin config --quiet
@@ -30,7 +35,7 @@ try {
     }
     $TemplateEnv = Join-Path $Scratch 'templates.env'
     [IO.File]::WriteAllText($TemplateEnv, "WEB_IMAGE=example/web:validation`nLAB_IMAGE=example/lab:validation`nJUPYTER_TOKEN=validation-only`nDATASETS_PATH=/tmp/datasets`nLAB_OUTPUT_PATH=/tmp/output`n")
-    foreach ($Stack in @('web','datalab')) {
+    foreach ($Stack in @('web','web-proxy','datalab')) {
         & docker compose --env-file $TemplateEnv -f (Join-Path $Root "templates/portainer/$Stack.compose.yaml") config --quiet
         if ($LASTEXITCODE -ne 0) { throw "Modele Portainer invalide : $Stack" }
         Write-Output "OK modele Portainer $Stack"

@@ -1,0 +1,12 @@
+# Variante facultative : conserve l'acces local existant et ajoute le tunnel.
+services:
+  web:
+    networks:
+      default:
+      proxy:
+        aliases:
+          - ${WEB_PROXY_ALIAS:-portfolio}
+networks:
+  proxy:
+    external: true
+    name: homelab-proxy

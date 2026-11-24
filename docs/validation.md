@@ -10,7 +10,7 @@ Vérifications réalisées le 11 novembre 2026, sans installer de service, const
 - La génération des arguments PowerShell pour export/import PostgreSQL est vérifiée avec une fonction Docker simulée : projet isolé, nom de fichier et contenu du script transmis. Aucune commande SQL n'a été exécutée.
 - `package-lock.json` est généré via npm sans exécuter les scripts de dépendances. Il résout notamment Next.js 16.4.6, React 19.3.1 et sharp 0.35.5. Ce verrou doit être conservé avec le modèle.
 
-Relancer les dix validations Compose sous PowerShell :
+Relancer les validations Compose sous PowerShell :
 
 ```powershell
 .\scripts\validate.ps1
@@ -19,6 +19,8 @@ Relancer les dix validations Compose sous PowerShell :
 Ce script utilise `.validation/` (ignoré par Git), une configuration Docker temporaire sans identifiants et des secrets factices. Il ne lance ni pull, ni build, ni conteneur et ne nécessite pas le moteur Docker. Les variables du shell peuvent toujours surcharger les fichiers env : utiliser une session sans variables applicatives préexportées pour une validation reproductible.
 
 ## À vérifier lors du premier déploiement
+
+L'ajout Cloudflare Tunnel comprend également des validations statiques du connecteur avec un token factice, des variantes web proxy et développement + proxy, ainsi que du modèle Portainer `web-proxy`. Ces vérifications ne créent pas `homelab-proxy` et n'ouvrent aucune connexion Cloudflare. Le token réel, les manifests AMD64/ARM64, le DNS, les politiques Access et l'accès HTTP de bout en bout devront être vérifiés lors du déploiement autorisé.
 
 La validation Compose ne démontre pas la disponibilité d'un tag d'image, sa compatibilité ARM64, la réussite du build applicatif, les permissions des dossiers ni le bon fonctionnement d'un service. Les builds Next.js/Data Lab, les tests de restauration réels, les connexions réseau NetBird, le comportement de l'agent sous Docker Desktop et les essais Linux/ARM64 restent à faire sur les machines cibles après votre décision de les lancer.
 
